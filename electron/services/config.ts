@@ -280,6 +280,9 @@ interface ConfigSchema {
   mcpExposeMediaPaths: boolean
   mcpProxyPort: number
   mcpProxyToken: string
+  // WeFlow 兼容 SSE 推送（Akasha 桥接等使用）
+  weflowCompatPort: number
+  weflowCompatToken: string
   // 手机遥控端网关（阶段1：局域网 HTTP+SSE；后续换 WebRTC 传输层）
   remoteGatewayEnabled: boolean
   remoteGatewayPort: number
@@ -520,6 +523,8 @@ const defaults: ConfigSchema = {
   mcpExposeMediaPaths: true,
   mcpProxyPort: 5032,
   mcpProxyToken: '',
+  weflowCompatPort: 5031,
+  weflowCompatToken: '',
   remoteGatewayEnabled: false,
   remoteGatewayPort: 5033,
   remoteGatewayToken: '',

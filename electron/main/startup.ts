@@ -8,6 +8,7 @@ import { mcpProxyService } from '../services/mcp/proxyService'
 import { remoteGatewayService } from '../services/remote/gateway'
 import { closeBridgeWindow, getRemoteControlInfo, startRemoteControl } from '../services/remote/remoteControl'
 import { mcpClientService } from '../services/mcpClientService'
+import { weflowCompatService } from '../services/weflowCompat'
 import { wcdbService } from '../services/wcdbService'
 import { monitorBridge } from '../services/monitorBridge'
 import { logStartupError, markStartupMilestone, warnStartupMilestone } from './startupDiagnostics'
@@ -184,6 +185,10 @@ export function warmupAgentProcess(ctx: MainProcessContext): void {
  * 只在生产环境触发，结果沿用 app:updateAvailable 推送给主窗口。
  */
 export function checkForUpdatesOnStartup(ctx: MainProcessContext): void {
+  // 本机为自定义补丁版（含 WeFlow 兼容 SSE 推送）。禁用启动时自动更新检查，
+  // 避免「强制更新」覆盖补丁。如需更新，删除下面这行 return 并重新打包。
+  return
+
   if (process.env.VITE_DEV_SERVER_URL) {
     return
   }
@@ -300,6 +305,14 @@ export async function startLocalIntegrationServices(ctx: MainProcessContext): Pr
     console.error('[McpProxy] 启动失败:', mcpProxyStartResult.error)
     ctx.getLogService()?.error('McpProxy', '内部 MCP 代理启动失败', { error: mcpProxyStartResult.error })
   }
+
+  // WeFlow 兼容 SSE 推送（Akasha 桥接等使用）
+  const weflowCompatResult = await weflowCompatService.start(ctx)
+  if (!weflowCompatResult.success) {
+    console.error('[WeflowCompat] 启动失败:', weflowCompatResult.error)
+    ctx.getLogService()?.warn('WeflowCompat', 'SSE 服务启动失败', { error: weflowCompatResult.error })
+  }
+
   markStartupMilestone('startup:mcp-client-restore-dispatch')
   mcpClientService.restoreSavedConnections().catch((e) => {
     logStartupError('startup:mcp-client-restore-failed', e)
@@ -323,6 +336,7 @@ export async function startLocalIntegrationServices(ctx: MainProcessContext): Pr
 
 export function stopLocalIntegrationServices(): void {
   nightlyMemoryService.stop()
+  weflowCompatService.stop()
   closeBridgeWindow()
   remoteGatewayService.stop().catch((e) => {
     console.error('[RemoteGateway] 停止失败:', e)

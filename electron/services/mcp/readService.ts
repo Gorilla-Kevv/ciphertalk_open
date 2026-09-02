@@ -215,7 +215,7 @@ type TranscribeAudioFileArgs = z.infer<typeof transcribeAudioFileArgsSchema>
 type GetMomentsTimelineArgs = z.infer<typeof getMomentsTimelineArgsSchema>
 type GetSessionContextArgs = z.infer<typeof getSessionContextArgsSchema>
 type ContactWithLastContact = ContactInfo & { lastContactTime?: number }
-type MessageNormalizeOptions = {
+export type MessageNormalizeOptions = {
   includeMediaPaths: boolean
   includeRaw: boolean
 }
@@ -1268,7 +1268,7 @@ async function resolveSenderDisplayName(sessionId: string, message: Message): Pr
   return contactName || null
 }
 
-async function normalizeMessage(
+export async function normalizeMessage(
   sessionId: string,
   message: Message,
   options: MessageNormalizeOptions
